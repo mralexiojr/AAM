@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>ASTRA — Калькулятор доходности</title>
+<style>
+@font-face{font-family:"Gilroy";src:local("Gilroy Regular"),local("Gilroy-Regular");font-weight:400}
+@font-face{font-family:"Gilroy";src:local("Gilroy Medium"),local("Gilroy-Medium");font-weight:500}
+@font-face{font-family:"Gilroy";src:local("Gilroy SemiBold"),local("Gilroy-Semibold");font-weight:600}
+@font-face{font-family:"Gilroy";src:local("Gilroy Bold"),local("Gilroy-Bold");font-weight:700}
+@font-face{font-family:"Gilroy";src:local("Gilroy ExtraBold"),local("Gilroy-ExtraBold"),local("Gilroy Heavy");font-weight:800}
+:root{
+  --bg:linear-gradient(180deg,#F8F5F0 0%,#F2EEE8 100%);
+  --card:#fff;
+  --card-soft:linear-gradient(180deg,#FCFAF7 0%,#F7F2EB 100%);
+  --line:#E5DED3; --line-soft:#EFE8DE;
+  --hdr:linear-gradient(135deg,#23252B 0%,#2C3039 58%,#8C816D 100%);
+  --btn:linear-gradient(135deg,#23252B 0%,#2B2F37 100%);
+  --text:#17191F; --t2:#727784; --t3:#9A907F;
+  --pos:#0F8A5F; --pos-bg:#E9F7F1;
+  --neg:#C55353; --neg-bg:#FCEEEE;
+  --brand:#23252B; --brand2:#8C816D; --brand3:#D8CFC2; --brand4:#F3EEE7;
+  --shadow:0 14px 34px rgba(23,25,31,.08);
+  --sh-sm:0 4px 12px rgba(23,25,31,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;-webkit-user-select:none;user-select:none}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Gilroy',Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg); color:var(--text); font-size:14px;
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+
+/* ── LAYOUT ──────────────────────────────────────── */
+.app{max-width:680px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(180deg,#F8F5F0 0%,#F2EEE8 100%)}
+.hdr{background:var(--hdr);color:#fff;padding:22px 24px 20px;flex-shrink:0}
+.hdr-row{display:flex;justify-content:space-between;align-items:center}
+.hdr-title{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.hdr-tag{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;opacity:.72;margin-top:2px}
+.hdr-badge{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#fff;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;backdrop-filter:blur(8px)}
+.nav{display:flex;background:rgba(255,255,255,.92);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.nav-btn{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--t2);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:13px 4px;transition:all .2s;white-space:nowrap;min-width:60px}
+.nav-btn.active{color:var(--brand);border-bottom-color:var(--brand)}
+.nav-btn:hover:not(.active){color:var(--text)}
+.main{flex:1;overflow-y:auto;padding:0 0 32px}
+
+/* ── SECTIONS ─────────────────────────────────────── */
+.sec{display:none;animation:fup .28s ease}
+.sec.active{display:block}
+@keyframes fup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.s-tit{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--t3);padding:20px 24px 10px}
+
+/* ── INNER NAV ────────────────────────────────────── */
+.i-nav{display:flex;gap:6px;padding:14px 24px 0;overflow-x:auto;scrollbar-width:none}
+.i-nav::-webkit-scrollbar{display:none}
+.i-btn{background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:999px;padding:7px 15px;font-size:12px;font-weight:600;color:var(--t2);white-space:nowrap;transition:all .2s;flex-shrink:0}
+.i-btn.active{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 8px 18px rgba(35,37,43,.14)}
+.i-btn:hover:not(.active){border-color:var(--brand3);color:var(--text)}
+.i-sec{display:none;animation:fup .28s ease}
+.i-sec.active{display:block}
+
+/* ── INPUT CARD ───────────────────────────────────── */
+.ic{margin:0 24px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:24px;padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.ic::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#23252B,#8C816D)}
+.f-lbl{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:7px}
+.f-row{display:flex;gap:8px;margin-bottom:14px;align-items:flex-end;flex-wrap:wrap}
+.f-row:last-child{margin-bottom:0}
+.f-col{display:flex;flex-direction:column;gap:0}
+.f-col.g{flex:1;min-width:100px}
+
+select,.num-inp{background:#fff;border:1px solid var(--line);color:var(--text);padding:10px 14px;font-family:inherit;font-size:14px;font-weight:600;border-radius:12px;outline:none;appearance:none;-webkit-appearance:none;transition:border-color .2s,box-shadow .2s;width:100%}
+select:focus,.num-inp:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(35,37,43,.08)}
+select option{background:#fff;color:var(--text)}
+.sw{position:relative}
+.sw::after{content:'▾';position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:12px;pointer-events:none}
+.sw select{padding-right:30px}
+
+/* ── BUTTONS ──────────────────────────────────────── */
+.btn-main{width:100%;padding:14px;background:var(--btn);border:none;border-radius:16px;color:#fff;font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.02em;transition:opacity .2s,transform .15s;box-shadow:0 12px 24px rgba(35,37,43,.18)}
+.btn-main:hover{opacity:.88;transform:translateY(-1px)}
+.btn-main:active{transform:translateY(0);opacity:1}
+.btn-in{flex:1;padding:11px;background:var(--pos-bg);border:1px solid rgba(15,138,95,.25);border-radius:12px;color:var(--pos);font-family:inherit;font-size:12px;font-weight:700;transition:all .2s}
+.btn-in:hover{background:rgba(15,138,95,.16)}
+.btn-out{flex:1;padding:11px;background:var(--neg-bg);border:1px solid rgba(197,83,83,.25);border-radius:12px;color:var(--neg);font-family:inherit;font-size:12px;font-weight:700;transition:all .2s}
+.btn-out:hover{background:rgba(197,83,83,.16)}
+.btn-del{background:var(--neg-bg);border:1px solid rgba(197,83,83,.2);border-radius:8px;padding:5px 9px;color:var(--neg);font-size:12px;line-height:1;flex-shrink:0;transition:all .2s}
+.btn-del:hover{background:rgba(197,83,83,.18)}
+.btn-cur-tog{background:var(--brand4);border:1px solid var(--brand3);border-radius:8px;padding:6px 9px;color:var(--brand2);font-size:13px;font-weight:700;line-height:1;flex-shrink:0;transition:all .2s;display:none}
+.btn-cur-tog:hover{background:var(--brand3)}
+
+/* ── INCEPTION CHIP ────────────────────────────────── */
+.inc-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--brand4);border:1px solid var(--brand3);color:var(--brand2);font-size:11px;font-weight:700;margin-bottom:14px}
+.inc-dot{width:5px;height:5px;background:var(--brand2);border-radius:50%;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── CURRENCY BADGE ─────────────────────────────────── */
+.cur-badge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:.05em;flex-shrink:0;white-space:nowrap}
+.cur-rub{background:var(--pos-bg);color:var(--pos);border:1px solid rgba(15,138,95,.2)}
+.cur-usd{background:rgba(139,107,35,.08);color:#6B520F;border:1px solid rgba(139,107,35,.18)}
+.cur-cny{background:rgba(197,83,83,.08);color:var(--neg);border:1px solid rgba(197,83,83,.18)}
+
+/* ── HERO RESULT CARD ───────────────────────────────── */
+.hero{margin:14px 24px 0;background:linear-gradient(135deg,#23252B 0%,#2C3039 58%,#8C816D 100%);border-radius:24px;padding:20px;color:#fff;position:relative;overflow:hidden;box-shadow:0 18px 36px rgba(23,25,31,.18)}
+.hero::after{content:'';position:absolute;top:-30px;right:-30px;width:140px;height:140px;background:radial-gradient(circle,rgba(255,255,255,.07) 0%,transparent 65%);pointer-events:none}
+.h-lbl{font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;opacity:.72;margin-bottom:8px}
+.h-amt{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.h-sub{font-size:12px;font-weight:500;opacity:.72;margin-top:6px}
+.h-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.12)}
+.hc-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;opacity:.65;margin-bottom:5px}
+.hc-v{font-size:20px;font-weight:800;letter-spacing:-.03em;color:#fff}
+.hc-v.pos{color:#6FDBA8} .hc-v.neg{color:#F08080} .hc-v.gold{color:#E8D4A0}
+.hc-a{font-size:10px;font-weight:600;opacity:.6;margin-top:2px}
+
+/* ── CARDS ────────────────────────────────────────── */
+.cw{margin:12px 24px 0;background:var(--card-soft);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--sh-sm)}
+.cw-tit{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3);margin-bottom:12px}
+canvas{width:100%;display:block}
+.c-leg{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.cleg-i{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--t2)}
+.cleg-l{width:16px;height:2px;border-radius:1px}
+
+/* ── STATS ROW ────────────────────────────────────── */
+.sr{display:flex;gap:8px;padding:12px 24px 0;overflow-x:auto;scrollbar-width:none}
+.sr::-webkit-scrollbar{display:none}
+.sc{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:14px;padding:11px 14px;flex-shrink:0;box-shadow:var(--sh-sm)}
+.sc-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+.sc-v{font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--text);margin-top:3px}
+.sc-v.pos{color:var(--pos)} .sc-v.neg{color:var(--neg)}
+.sc-s{font-size:10px;font-weight:500;color:var(--t2);margin-top:2px}
+
+/* ── FUND TOGGLES ─────────────────────────────────── */
+.f-togs{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.ftog{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.8);font-size:12px;font-weight:600;color:var(--t2);transition:all .2s;cursor:pointer}
+.ftog.on{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 8px 18px rgba(35,37,43,.14)}
+.fdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ── CMP TABLE ────────────────────────────────────── */
+.cmp-wrap{margin:14px 24px 0;overflow-x:auto}
+.cmp-t{width:100%;border-collapse:collapse;font-size:11px;min-width:480px}
+.cmp-t th{background:rgba(255,255,255,.7);color:var(--t3);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:10px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.cmp-t th:first-child{text-align:left}
+.cmp-t td{padding:9px 9px;border-bottom:1px solid var(--line-soft);font-weight:600;text-align:right;color:var(--t2);white-space:nowrap}
+.cmp-t td:first-child{text-align:left;color:var(--text)}
+.cmp-t tr:last-child td{border-bottom:none}
+.cmp-t tr:hover td{background:rgba(35,37,43,.03)}
+
+/* ── TXN ROWS ─────────────────────────────────────── */
+.txn-list{padding:10px 24px;display:flex;flex-direction:column;gap:8px}
+.txr{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:18px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px;box-shadow:var(--sh-sm)}
+.txr.is-out{border-color:rgba(197,83,83,.25)}
+.txr-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:2px}
+.txr-ico.in{background:var(--pos-bg);border:1px solid rgba(15,138,95,.2)}
+.txr-ico.out{background:var(--neg-bg);border:1px solid rgba(197,83,83,.2)}
+.txr-body{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0}
+.txr-row1,.txr-row2{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.txr-badge{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:6px;flex-shrink:0}
+.txr-badge.in{background:var(--pos-bg);color:var(--pos)}
+.txr-badge.out{background:var(--neg-bg);color:var(--neg)}
+.txr-body select{font-size:12px;padding:7px 28px 7px 10px;border-radius:9px}
+.txr-body .num-inp{font-size:12px;padding:7px 10px;border-radius:9px;min-width:90px;flex:1}
+.txr-body .sw{flex:1;min-width:100px}
+
+/* ── FUND CARDS ───────────────────────────────────── */
+.fc-list{padding:8px 24px;display:flex;flex-direction:column;gap:10px}
+.fcard{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:22px;padding:18px;cursor:pointer;position:relative;overflow:hidden;transition:all .2s;box-shadow:var(--sh-sm)}
+.fcard:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.fcard.open{border-color:var(--brand3);box-shadow:var(--shadow)}
+.fcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#23252B,#8C816D);opacity:0;transition:opacity .25s}
+.fcard.open::before{opacity:1}
+.fc-top{display:flex;justify-content:space-between;align-items:flex-start;padding-right:24px}
+.fc-name{font-size:15px;font-weight:700;color:var(--text)}
+.fc-tag{font-size:10px;font-weight:600;color:var(--t2);margin-top:3px}
+.fc-ret{font-size:22px;font-weight:800;letter-spacing:-.03em}
+.fc-ret.pos{color:var(--pos)} .fc-ret.neg{color:var(--neg)}
+.fc-ann{font-size:10px;font-weight:600;text-align:right;margin-top:2px}
+.fc-ann.pos{color:var(--pos)} .fc-ann.neg{color:var(--neg)}
+.fc-bar-bg{margin-top:12px;height:4px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+.fc-bar{height:100%;border-radius:2px}
+.fc-kv{display:flex;justify-content:space-between;margin-top:8px}
+.fkv{font-size:10px;color:var(--t2)} .fkv-v{font-size:10px;font-weight:700;color:var(--text)}
+.fc-chev{position:absolute;top:18px;right:16px;color:var(--t2);transition:transform .25s,color .2s}
+.fcard.open .fc-chev{transform:rotate(180deg);color:var(--brand)}
+.fc-det{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.fc-det.open{display:block}
+.fc-dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.fd-l{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3)}
+.fd-v{font-size:14px;font-weight:700;color:var(--text);margin-top:3px}
+.mwr-tag{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:10px}
+.mwr-tag.pos{background:var(--pos-bg);color:var(--pos)}
+.mwr-tag.neg{background:var(--neg-bg);color:var(--neg)}
+
+/* ── TRANCHE TABLE ─────────────────────────────────── */
+.tr-wrap{margin:14px 24px 0;overflow-x:auto}
+.tr-t{width:100%;border-collapse:collapse;font-size:11px;min-width:420px}
+.tr-t th{background:rgba(255,255,255,.7);color:var(--t3);font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 9px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.tr-t th:first-child{text-align:left}
+.tr-t td{padding:9px 9px;border-bottom:1px solid var(--line-soft);font-weight:600;text-align:right;color:var(--t2);white-space:nowrap}
+.tr-t td:first-child{text-align:left;color:var(--text)}
+.tr-t tr:last-child td{border-bottom:none}
+.tr-st{display:inline-block;padding:2px 8px;border-radius:6px;font-size:9px;font-weight:700;letter-spacing:.05em}
+.tr-st.act{background:var(--pos-bg);color:var(--pos)}
+.tr-st.red{background:var(--line-soft);color:var(--t2)}
+
+/* ── RATES PANEL ───────────────────────────────────── */
+.rates-panel{margin:12px 24px 0;background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.rates-hdr{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;user-select:none}
+.rates-hdr-l{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--t3)}
+.rates-hdr-r{font-size:11px;font-weight:600;color:var(--t2);display:flex;align-items:center;gap:5px}
+.rates-body{display:none;padding:0 14px 14px}
+.rates-body.open{display:block}
+.rates-note{font-size:9px;color:var(--t3);line-height:1.6;margin-bottom:10px;padding:8px 10px;background:var(--brand4);border:1px solid var(--brand3);border-radius:8px}
+.rates-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.rc{background:#fff;border:1px solid var(--line-soft);border-radius:8px;padding:7px 8px}
+.rc-d{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3)}
+.rc-v{font-size:13px;font-weight:700;color:var(--text);margin-top:2px}
+
+/* ── NOTE ──────────────────────────────────────────── */
+.note-bl{margin:8px 24px 0;background:var(--brand4);border:1px solid var(--brand3);border-radius:14px;padding:10px 14px}
+.note-bl p{font-size:10px;font-weight:500;color:var(--brand2);line-height:1.7}
+
+/* ── MISC ──────────────────────────────────────────── */
+.add-row{display:flex;gap:8px;padding:0 24px 12px}
+.empty{padding:48px 24px;text-align:center;color:var(--t2);font-size:13px;font-weight:600;line-height:1.6}
+.empty-ico{font-size:32px;margin-bottom:12px}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--brand3);border-radius:2px}
+.pb32{padding-bottom:32px}
+
+/* ═══════════════════════════════════════════════════
+   МОБИЛЬНЫЕ / iPHONE
+   ═══════════════════════════════════════════════════ */
+html { height: -webkit-fill-available; }
+body { min-height: -webkit-fill-available; }
+.app { max-width: 100%; min-height: 100vh; min-height: -webkit-fill-available; min-height: 100svh; }
+
+/* Safe area */
+.hdr { padding-top: max(22px, env(safe-area-inset-top)); padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
+.nav { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+.main { -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+.pb32, .fc-list.pb32, .tr-wrap.pb32 { padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+
+/* Prevent zoom on focus — font-size must be >= 16px */
+select, input[type="text"], input[type="number"], .num-inp,
+.txr-body select, .txr-body .num-inp {
+  font-size: 16px !important;
+  -webkit-appearance: none;
+  border-radius: 12px;
+}
+
+/* Touch targets min 44pt */
+.btn-main  { min-height: 50px; font-size: 15px; }
+.btn-in, .btn-out { min-height: 46px; font-size: 13px; }
+.btn-del   { min-height: 40px; min-width: 40px; padding: 8px 11px; }
+.btn-cur-tog { min-height: 40px; min-width: 40px; padding: 8px 11px; font-size: 15px; display:none; }
+.i-btn     { min-height: 40px; padding: 10px 18px; font-size: 12px; }
+.nav-btn   { min-height: 48px; font-size: 10px; }
+.ftog      { min-height: 38px; padding: 9px 15px; }
+select, .num-inp { min-height: 48px; padding: 12px 14px; }
+.sw select { padding-right: 34px; }
+
+/* Tighter side padding for 375-390pt screens */
+.ic      { margin: 0 16px; padding: 18px 16px; }
+.hero    { margin: 12px 16px 0; }
+.cw      { margin: 12px 16px 0; padding: 14px; }
+.sr      { padding: 12px 16px 0; }
+.s-tit   { padding: 18px 16px 10px; }
+.i-nav   { padding: 14px 16px 0; gap: 7px; }
+.add-row { padding: 0 16px 12px; }
+.fc-list { padding: 8px 16px; }
+.txn-list { padding: 10px 16px; }
+.cmp-wrap { margin: 14px 16px 0; }
+.tr-wrap  { margin: 14px 16px 0; }
+.rates-panel { margin-left: 16px; margin-right: 16px; }
+
+/* Transaction rows */
+.txr { padding: 12px; gap: 8px; border-radius: 16px; }
+.txr-body { gap: 8px; }
+.txr-row1, .txr-row2 { gap: 5px; }
+.txr-body select { font-size: 16px !important; padding: 9px 28px 9px 10px; }
+.txr-body .num-inp { font-size: 16px !important; padding: 9px 10px; min-width: 80px; }
+
+/* Touch scroll on tables */
+.cmp-wrap, .tr-wrap { -webkit-overflow-scrolling: touch; }
+
+/* Hero */
+.h-amt { font-size: 28px; }
+.hc-v  { font-size: 17px; }
+
+/* Rates: 3 cols on mobile */
+.rates-grid { grid-template-columns: repeat(3, 1fr); }
+
+/* Remove hover effects on touch devices — they "stick" on iOS */
+@media (hover: none) and (pointer: coarse) {
+  .btn-main:hover  { opacity: 1; transform: none; }
+  .fcard:hover     { box-shadow: var(--sh-sm); transform: none; }
+  .ftog:hover      { border-color: var(--line); color: var(--t2); }
+  .i-btn:hover:not(.active) { border-color: var(--border); color: var(--t3); }
+}
+
+/* Active states for tap feedback */
+.btn-main:active  { opacity: .85; transform: scale(.98); transition: none; }
+.btn-in:active, .btn-out:active { opacity: .8; transition: none; }
+.fcard:active     { background: var(--card-soft); }
+.i-btn:active     { opacity: .75; }
+.nav-btn:active   { opacity: .7; }
+
+.sw::after { font-size: 14px; right: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div class="hdr-row">
+    <div>
+      <div class="hdr-tag">Управление активами</div>
+      <div class="hdr-title">Калькулятор доходности</div>
+    </div>
+    <div class="hdr-badge">31.03.2026</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="goMain('calc')">Паи</button>
+  <button class="nav-btn" onclick="goMain('cmp')">Сравнение</button>
+  <button class="nav-btn" onclick="goMain('port')">Портфель MWR</button>
+</nav>
+
+<div class="main">
+
+<!-- ═══ TAB 1: CALCULATOR ═══ -->
+<div id="s-calc" class="sec active pb32">
+  <div class="s-tit">Калькулятор паёв</div>
+  <div class="ic">
+    <div class="f-lbl">Фонд</div>
+    <div class="f-row" style="margin-bottom:16px">
+      <div class="sw" style="flex:1"><select id="c1Fund" onchange="c1FundChange()"></select></div>
+    </div>
+    <div class="f-lbl">Дата входа</div>
+    <div class="f-row" style="margin-bottom:16px">
+      <div class="sw" style="flex:1"><select id="c1Entry"></select></div>
+    </div>
+    <div class="f-lbl">Дата выхода</div>
+    <div class="f-row" style="margin-bottom:16px">
+      <div class="sw" style="flex:1"><select id="c1Exit"></select></div>
+    </div>
+    <div class="f-lbl">Сумма вложения</div>
+    <div class="f-row" style="margin-bottom:20px;align-items:center">
+      <input type="text" id="c1Amt" class="num-inp" value="1 000 000" data-raw="1000000" style="text-align:right;flex:1" oninput="fmtNumInput(this)">
+      <span id="c1CurBadge" class="cur-badge cur-rub" data-inputcur="RUB">RUB</span>
+      <button id="c1CurTog" class="btn-cur-tog" onclick="toggleC1Cur()" title="CNY ↔ ₽">⇄</button>
+    </div>
+    <button class="btn-main" onclick="runCalc1()">Рассчитать</button>
+  </div>
+
+  <div id="c1Res" style="display:none">
+    <div class="hero">
+      <div class="h-lbl">Итоговая стоимость</div>
+      <div class="h-amt" id="c1FV">—</div>
+      <div class="h-sub" id="c1Per">—</div>
+      <div class="h-grid">
+        <div><div class="hc-lbl">Кум. доходность</div><div class="hc-v" id="c1CR">—</div><div class="hc-a" id="c1CRa"></div></div>
+        <div><div class="hc-lbl">% годовых</div><div class="hc-v" id="c1AR">—</div><div class="hc-a" id="c1ARa"></div></div>
+        <div><div class="hc-lbl">Прибыль / убыток</div><div class="hc-v" id="c1PL">—</div></div>
+        <div><div class="hc-lbl">Макс. просадка</div><div class="hc-v" id="c1DD">—</div></div>
+      </div>
+    </div>
+    <div class="sr" id="c1Stats"></div>
+    <div class="cw">
+      <div class="cw-tit">Динамика — весь фонд с начала формирования</div>
+      <canvas id="chart1" height="160"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB 2: COMPARISON ═══ -->
+<div id="s-cmp" class="sec pb32">
+  <div class="s-tit">Сравнение фондов</div>
+  <div class="ic">
+    <div class="f-lbl">Период — начало</div>
+    <div class="f-row" style="margin-bottom:16px">
+      <div class="sw" style="flex:1"><select id="cmpS"></select></div>
+    </div>
+    <div class="f-lbl">Период — конец</div>
+    <div class="f-row" style="margin-bottom:16px">
+      <div class="sw" style="flex:1"><select id="cmpE"></select></div>
+    </div>
+    <div class="f-lbl">Фонды</div>
+    <div class="f-togs" id="cmpTogs"></div>
+    <button class="btn-main" onclick="runCmp()">Сравнить</button>
+  </div>
+  <div class="cw" style="margin:14px 24px 0">
+    <div class="cw-tit">Рост от базы 100 — нормировано к точке входа</div>
+    <canvas id="chart2" height="200"></canvas>
+    <div class="c-leg" id="cmpLeg"></div>
+  </div>
+  <div class="cmp-wrap">
+    <table class="cmp-t"><thead id="cmpTH"></thead><tbody id="cmpTB"></tbody></table>
+  </div>
+  <div id="cmpNote" style="display:none;margin:8px 24px 0;font-size:10px;color:#8C6B00;font-weight:600;padding:8px 14px;background:rgba(242,183,49,.1);border:1px solid rgba(242,183,49,.3);border-radius:10px">
+    ✦ Отмечены фонды, не существовавшие на начало периода — рост нормирован к 100 с даты фактического формирования
+  </div>
+</div>
+
+<!-- ═══ TAB 3: MWR ═══ -->
+<div id="s-port" class="sec pb32">
+  <div class="i-nav">
+    <button class="i-btn active" onclick="goInner('inp')">Вводы</button>
+    <button class="i-btn" onclick="goInner('mwr')">MWR</button>
+    <button class="i-btn" onclick="goInner('fnd')">По фондам</button>
+    <button class="i-btn" onclick="goInner('tra')">Транши</button>
+  </div>
+
+  <div id="si-inp" class="i-sec active">
+    <div class="s-tit">Транзакции клиента</div>
+    <div class="add-row">
+      <button class="btn-in" onclick="addTxn('in')">+ Ввод</button>
+      <button class="btn-out" onclick="addTxn('out')">− Вывод</button>
+    </div>
+    <div class="txn-list" id="txnList"></div>
+    <div style="padding:0 24px;margin-top:4px">
+      <div class="ic" style="margin:0">
+        <div class="f-lbl">Дата расчёта</div>
+        <div class="f-row" style="margin-bottom:20px">
+          <div class="sw" style="flex:1"><select id="mwrEnd"></select></div>
+        </div>
+        <button class="btn-main" onclick="runMWR()">Рассчитать MWR</button>
+      </div>
+    </div>
+    <div class="rates-panel" style="margin-top:14px">
+      <div class="rates-hdr" onclick="toggleRates(this)">
+        <span class="rates-hdr-l">Курсы ЦБ РФ CNY / RUB</span>
+        <span class="rates-hdr-r">~ приближённые · cbr.ru <span id="ratesArr">▾</span></span>
+      </div>
+      <div class="rates-body" id="ratesBody">
+        <p class="rates-note">Используются для пересчёта <strong>Ю5 CNY→₽</strong>. Уточняйте на <strong>cbr.ru</strong>.</p>
+        <div class="rates-grid" id="ratesGrid"></div>
+      </div>
+    </div>
+    <div class="rates-panel" style="margin-top:8px">
+      <div class="rates-hdr" onclick="toggleRates2(this)">
+        <span class="rates-hdr-l">Курсы ЦБ РФ USD / RUB (фиксинг)</span>
+        <span class="rates-hdr-r">~ приближённые · cbr.ru <span id="ratesArr2">▾</span></span>
+      </div>
+      <div class="rates-body" id="ratesBody2">
+        <p class="rates-note">Точные значения ЦБ РФ фиксинг для <strong>Д5 USD</strong> и <strong>Д1 USD</strong>. Датой формирования используется курс 19.04.2023 = 81.60 (Д5) и 08.08.2023 = 96.57 (Д1).</p>
+        <div class="rates-grid" id="ratesGrid2"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="si-mwr" class="i-sec">
+    <div class="empty" id="mwrEmp"><div class="empty-ico">📊</div>Добавьте транзакции<br>и нажмите «Рассчитать MWR»</div>
+    <div id="mwrHero" style="display:none">
+      <div class="hero">
+        <div class="h-lbl">Стоимость портфеля</div>
+        <div class="h-amt" id="mwrPV">—</div>
+        <div class="h-sub" id="mwrSub">—</div>
+        <div class="h-grid">
+          <div><div class="hc-lbl">MWR / IRR</div><div class="hc-v gold" id="mwrIRR">—</div><div class="hc-a">в год</div></div>
+          <div><div class="hc-lbl">Фин. результат</div><div class="hc-v" id="mwrFR">—</div><div class="hc-a" id="mwrFRa"></div></div>
+          <div><div class="hc-lbl">Вложено (₽)</div><div class="hc-v" id="mwrInv">—</div></div>
+          <div><div class="hc-lbl">Выведено (₽)</div><div class="hc-v" id="mwrWdr">—</div></div>
+        </div>
+      </div>
+      <div class="sr" id="mwrStats"></div>
+      <div class="cw"><div class="cw-tit">Динамика стоимости портфеля (₽)</div><canvas id="chart3" height="160"></canvas></div>
+    </div>
+  </div>
+
+  <div id="si-fnd" class="i-sec">
+    <div class="empty" id="fndEmp"><div class="empty-ico">📂</div>После расчёта — разбивка по фондам</div>
+    <div class="fc-list pb32" id="fcList" style="display:none"></div>
+  </div>
+
+  <div id="si-tra" class="i-sec">
+    <div class="empty" id="traEmp"><div class="empty-ico">🗂️</div>После расчёта — таблица траншей</div>
+    <div class="tr-wrap pb32" id="trWrap" style="display:none">
+      <table class="tr-t">
+        <thead><tr>
+          <th style="text-align:left">Фонд</th>
+          <th>Дата ввода</th><th>Сумма</th>
+          <th>Стоим.</th><th>Кум.%</th><th>% год.</th><th>Статус</th>
+        </tr></thead>
+        <tbody id="trBd"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.main -->
+</div><!-- /.app -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  FUND DATA
+// ═══════════════════════════════════════════════════════
+const FUNDS = {
+  R5:    {name:'Хедж-фонд Р5',        short:'Р5',    cur:'RUB', color:'#23252B', incYM:'2022-05', incDate:'05.05.2022',
+    ret:{'2022-05':0.04365121,'2022-06':0.02808991,'2022-07':0.01133679,'2022-08':0.00778914,'2022-09':0.01018303,'2022-10':-0.00227187,'2022-11':0.00838438,'2022-12':0.00624294,'2023-01':0.00392693,'2023-02':0.00421633,'2023-03':0.01239820,'2023-04':-0.00192796,'2023-05':0.00764377,'2023-06':0.01866497,'2023-07':0.03008303,'2023-08':0.03840247,'2023-09':0.03253735,'2023-10':0.01633671,'2023-11':-0.00643726,'2023-12':0.02822377,'2024-01':0.00825485,'2024-02':0.01746912,'2024-03':0.02611723,'2024-04':0.02290936,'2024-05':0.04565129,'2024-06':0.02249141,'2024-07':0.02673153,'2024-08':0.01906456,'2024-09':0.03230859,'2024-10':0.04944379,'2024-11':-0.02830857,'2024-12':0.02322313,'2025-01':-0.03486882,'2025-02':0.06643919,'2025-03':0.04524667,'2025-04':-0.05381221,'2025-05':0.03598227,'2025-06':0.11758262,'2025-07':0.07306535,'2025-08':0.03033002,'2025-09':-0.10579570,'2025-10':0.03828169,'2025-11':0.04701774,'2025-12':0.00608008,'2026-01':-0.04485144,'2026-02':0.03195191,'2026-03':0.00856081}},
+  D5_RUB:{name:'Хедж-фонд Д5 (RUB)',  short:'Д5 ₽',  cur:'RUB', color:'#4A6FA5', incYM:'2023-04', incDate:'19.04.2023',
+    ret:{'2023-04':-0.00421331,'2023-05':0.01230897,'2023-06':0.11780361,'2023-07':0.02343912,'2023-08':0.09698565,'2023-09':0.07577543,'2023-10':-0.01600143,'2023-11':-0.02277180,'2023-12':0.03380965,'2024-01':-0.00445543,'2024-02':0.03163889,'2024-03':0.03943277,'2024-04':0.01150350,'2024-05':-0.01183718,'2024-06':-0.04856002,'2024-07':-0.02751701,'2024-08':0.02275186,'2024-09':0.04614447,'2024-10':0.04516247,'2024-11':0.11767275,'2024-12':-0.02820110,'2025-01':-0.07988865,'2025-02':-0.00041685,'2025-03':-0.01362040,'2025-04':-0.08295999,'2025-05':-0.00562153,'2025-06':0.06923807,'2025-07':0.09805855,'2025-08':0.02458489,'2025-09':-0.07996668,'2025-10':-0.00224995,'2025-11':-0.00813300,'2025-12':0.01222784,'2026-01':-0.06191151,'2026-02':0.01200739,'2026-03':0.04203878}},
+  D5_USD:{name:'Хедж-фонд Д5 (USD)',  short:'Д5 $',  cur:'USD', color:'#3D8A6E', incYM:'2023-04', incDate:'19.04.2023',
+    ret:{'2023-04':0.00931175,'2023-05':0.01007702,'2023-06':0.03628858,'2023-07':-0.02093023,'2023-08':0.04038005,'2023-09':0.05936073,'2023-10':0.02801724,'2023-11':0.02515723,'2023-12':0.02453988,'2024-01':0,'2024-02':0.00266134,'2024-03':0.03384207,'2024-04':0.01797176,'2024-05':0.01008827,'2024-06':-0.00374532,'2024-07':-0.03159514,'2024-08':-0.03419966,'2024-09':0.02330420,'2024-10':0.00422211,'2024-11':0.00648422,'2024-12':0.02972853,'2025-01':-0.04349272,'2025-02':0.10778918,'2025-03':0.01822777,'2025-04':-0.03791444,'2025-05':0.03075772,'2025-06':0.07044581,'2025-07':0.07361496,'2025-08':0.02438975,'2025-09':-0.10532405,'2025-10':0.01786878,'2025-11':0.02669907,'2025-12':0.01224984,'2026-01':-0.03101874,'2026-02':-0.00413134,'2026-03':-0.00883322}},
+  YU5:  {name:'Хедж-фонд Ю5 (CNY)',   short:'Ю5 ¥',  cur:'CNY', color:'#8C6B25', incYM:'2023-04', incDate:'19.04.2023',
+    ret:{'2023-04':0.01039363,'2023-05':0.00635286,'2023-06':0.00675323,'2023-07':0.01713955,'2023-08':0.03848343,'2023-09':0.02412016,'2023-10':0.01091960,'2023-11':-0.00688341,'2023-12':0.01578162,'2024-01':0.00010498,'2024-02':0.01238585,'2024-03':0.01907724,'2024-04':0.01332791,'2024-05':0.03634538,'2024-06':0.01026933,'2024-07':0.01793249,'2024-08':0.01337730,'2024-09':0.00883146,'2024-10':0.04063767,'2024-11':-0.00212521,'2024-12':0.04321590,'2025-01':-0.03368493,'2025-02':0.06602113,'2025-03':0.04442609,'2025-04':-0.05226123,'2025-05':0.02552765,'2025-06':0.09745384,'2025-07':0.05744570,'2025-08':0.02866956,'2025-09':-0.10112436,'2025-10':0.01804260,'2025-11':0.02814804,'2025-12':0.00362135,'2026-01':-0.03478386,'2026-02':0.01069159,'2026-03':-0.00147951}},
+  D1_RUB:{name:'Хедж-фонд Д1 (RUB)',  short:'Д1 ₽',  cur:'RUB', color:'#7B4FA0', incYM:'2023-08', incDate:'08.08.2023',
+    ret:{'2023-08':0.02714390,'2023-09':0.02216952,'2023-10':0.01075456,'2023-11':-0.00464830,'2023-12':0.01502349,'2024-01':0.01480237,'2024-02':0.02550492,'2024-03':0.02871184,'2024-04':0.00248906,'2024-05':-0.03190520,'2024-06':-0.06820077,'2024-07':-0.04253745,'2024-08':0.02103208,'2024-09':0.03451966,'2024-10':0.00363943,'2024-11':0.13431369,'2024-12':0.01089453,'2025-01':-0.03960487,'2025-02':-0.01273797,'2025-03':-0.00416034,'2025-04':-0.02676738,'2025-05':-0.02268570,'2025-06':0.00985016,'2025-07':0.07709671,'2025-08':0.01648464,'2025-09':-0.00533872,'2025-10':-0.02467981,'2025-11':-0.03006454,'2025-12':0.03673255,'2026-01':-0.00711371,'2026-02':-0.03578876,'2026-03':0.04928611}},
+  D1_USD:{name:'Хедж-фонд Д1 (USD)',  short:'Д1 $',  cur:'USD', color:'#2E7FA8', incYM:'2023-08', incDate:'08.08.2023',
+    ret:{'2023-08':0.03398058,'2023-09':0.00657277,'2023-10':0.05597015,'2023-11':0.04416961,'2023-12':0.00592217,'2024-01':0.01934399,'2024-02':-0.00330033,'2024-03':0.02317881,'2024-04':0.00889968,'2024-05':-0.01042502,'2024-06':-0.02431118,'2024-07':-0.04655259,'2024-08':-0.03582368,'2024-09':0.01193319,'2024-10':-0.03567442,'2024-11':0.02146969,'2024-12':0.07115468,'2025-01':-0.00161548,'2025-02':0.09413428,'2025-03':0.02799328,'2025-04':0.02103839,'2025-05':0.01306927,'2025-06':0.01099082,'2025-07':0.05311975,'2025-08':0.01629104,'2025-09':-0.03275294,'2025-10':-0.00501336,'2025-11':0.00399735,'2025-12':0.03675508,'2026-01':0.02558364,'2026-02':-0.05116528,'2026-03':-0.00193970}},
+  APLUS: {name:'Хедж-фонд А+ (Акции)', short:'А+',    cur:'RUB', color:'#B8450F', incYM:'2024-05', incDate:'21.05.2024',
+    ret:{'2024-05':-0.03160000,'2024-06':-0.00133209,'2024-07':0.00897519,'2024-08':-0.00566720,'2024-09':0.05872653,'2024-10':-0.00564620,'2024-11':0.01623199,'2024-12':0.06470010,'2025-01':0.07169873,'2025-02':0.08187130,'2025-03':-0.03177799,'2025-04':-0.06652051,'2025-05':-0.03422730,'2025-06':0.02955744,'2025-07':0.03469207,'2025-08':0.02193016,'2025-09':-0.06913373,'2025-10':-0.03926032,'2025-11':0.01126763,'2025-12':0.09829917,'2026-01':0.10307736,'2026-02':0.04664393,'2026-03':-0.07137026}},
+  A12080:{name:'Рос. акции 120/80',    short:'120/80', cur:'RUB', color:'#5A7A2E', incYM:'2024-09', incDate:'10.09.2024',
+    ret:{'2024-09':0.07218000,'2024-10':-0.04334160,'2024-11':0.02884831,'2024-12':0.09305411,'2025-01':0.07464239,'2025-02':0.08914166,'2025-03':-0.03313088,'2025-04':-0.07038617,'2025-05':-0.01929147,'2025-06':0.04508100,'2025-07':0.02861554,'2025-08':0.03732452,'2025-09':-0.06668073,'2025-10':-0.02957419,'2025-11':0.01524190,'2025-12':0.08235063,'2026-01':0.06707502,'2026-02':0.03844325,'2026-03':-0.06227409}},
+  R1:    {name:'Облигации Р1',          short:'Р1',    cur:'RUB', color:'#2F6E52', incYM:'2025-03', incDate:'12.03.2025',
+    ret:{'2025-03':-0.01166000,'2025-04':-0.01028998,'2025-05':0.01813591,'2025-06':0.06008575,'2025-07':0.03698792,'2025-08':0.01993972,'2025-09':-0.03885799,'2025-10':0.01809474,'2025-11':0.02502151,'2025-12':0.00816964,'2026-01':0.00038967,'2026-02':0.01705043,'2026-03':0.01214258}}
+};
+
+// CNY/RUB CBR (approx, end-of-month). Уточняйте на cbr.ru
+const CNY_RUB = {
+  '2023-03':11.10,'2023-04':11.90,'2023-05':11.40,'2023-06':11.60,
+  '2023-07':12.60,'2023-08':13.70,'2023-09':13.30,'2023-10':13.30,
+  '2023-11':12.50,'2023-12':12.70,
+  '2024-01':12.30,'2024-02':12.60,'2024-03':12.70,'2024-04':12.80,
+  '2024-05':12.30,'2024-06':12.00,'2024-07':12.50,'2024-08':12.20,
+  '2024-09':12.30,'2024-10':12.40,'2024-11':12.40,'2024-12':12.50,
+  '2025-01':12.40,'2025-02':12.10,'2025-03':12.00,'2025-04':11.60,
+  '2025-05':11.40,'2025-06':11.30,'2025-07':11.50,'2025-08':11.20,
+  '2025-09':11.10,'2025-10':11.30,'2025-11':11.20,'2025-12':11.40,
+  '2026-01':11.30,'2026-02':11.40,'2026-03':11.20
+};
+
+// USD/RUB ЦБ РФ фиксинг — точные значения на конец каждого месяца
+const USD_RUB = {
+  '2023-04': 80.5093,   // 30.04.2023
+  '2023-05': 80.6872,   // 31.05.2023
+  '2023-06': 87.0341,   // 30.06.2023
+  '2023-07': 90.9783,   // 31.07.2023
+  '2023-08': 95.9283,   // 31.08.2023
+  '2023-09': 97.4147,   // 30.09.2023
+  '2023-10': 93.2435,   // 31.10.2023
+  '2023-11': 88.8841,   // 30.11.2023
+  '2023-12': 89.6883,   // 31.12.2023
+  '2024-01': 89.2887,   // 31.01.2024
+  '2024-02': 91.8692,   // 29.02.2024
+  '2024-03': 92.3660,   // 31.03.2024
+  '2024-04': 91.7791,   // 30.04.2024
+  '2024-05': 89.7869,   // 31.05.2024
+  '2024-06': 85.7480,   // 30.06.2024
+  '2024-07': 86.1091,   // 31.07.2024
+  '2024-08': 91.1868,   // 31.08.2024
+  '2024-09': 93.2221,   // 30.09.2024
+  '2024-10': 97.0226,   // 31.10.2024
+  '2024-11': 107.7409,  // 30.11.2024
+  '2024-12': 101.6797,  // 31.12.2024
+  '2025-01': 97.8107,   // 31.01.2025
+  '2025-02': 88.2568,   // 28.02.2025
+  '2025-03': 85.4963,   // 31.03.2025
+  '2025-04': 81.4933,   // 30.04.2025
+  '2025-05': 78.6171,   // 31.05.2025
+  '2025-06': 78.5284,   // 30.06.2025
+  '2025-07': 80.3163,   // 31.07.2025
+  '2025-08': 80.3316,   // 31.08.2025
+  '2025-09': 82.6084,   // 30.09.2025
+  '2025-10': 80.9756,   // 31.10.2025
+  '2025-11': 78.2284,   // 30.11.2025
+  '2025-12': 78.2267,   // 31.12.2025
+  '2026-01': 75.7327,   // 31.01.2026
+  '2026-02': 76.9600,   // 28.02.2026
+  '2026-03': 80.9100    // 31.03.2026
+};
+
+// Точные курсы на дату формирования долларовых фондов
+const USD_RUB_INC = {
+  'D5_USD': 81.6028,   // 19.04.2023
+  'D1_USD': 96.5668    // 08.08.2023
+};
+
+function _fxFallback(tbl, ymStr) {
+  if(tbl[ymStr]!==undefined) return tbl[ymStr];
+  const keys=Object.keys(tbl).sort().filter(k=>ymDiff(k,ymStr)>=0);
+  return keys.length ? tbl[keys[keys.length-1]] : tbl[Object.keys(tbl).sort().pop()];
+}
+function getCNYRUB(ymStr){ return _fxFallback(CNY_RUB, ymStr); }
+function getUSDRUB(ymStr){ return _fxFallback(USD_RUB, ymStr); }
+
+// True for funds whose native currency is not RUB
+function isForeignCur(fundId){ return FUNDS[fundId].cur==='CNY'||FUNDS[fundId].cur==='USD'; }
+
+// FX rate: native → RUB for a given fund and month (month-end rates)
+function getFXRate(fundId, ymStr){
+  if(FUNDS[fundId].cur==='CNY') return getCNYRUB(ymStr);
+  if(FUNDS[fundId].cur==='USD') return getUSDRUB(ymStr);
+  return 1;
+}
+
+// FX rate for an entry: use exact inception-date rate when isInc=true
+function getFXRateForEntry(fundId, ymStr, isInc){
+  if(isInc && FUNDS[fundId].cur==='USD' && USD_RUB_INC[fundId]) return USD_RUB_INC[fundId];
+  return getFXRate(fundId, ymStr);
+}
+
+// ═══════════════════════════════════════════════════════
+//  DATE UTILS
+// ═══════════════════════════════════════════════════════
+const ym   = (y,m) => `${y}-${String(m).padStart(2,'0')}`;
+const pYM  = s => { const[y,m]=s.split('-'); return{y:+y,m:+m}; };
+function ymAdd(s,n){ let{y,m}=pYM(s); m+=n; while(m>12){m-=12;y++;} while(m<1){m+=12;y--;} return ym(y,m); }
+function ymDiff(a,b){ const p=pYM(a),q=pYM(b); return (q.y-p.y)*12+(q.m-p.m); }
+function monthEnd(y,m){ return new Date(y,m,0).getDate(); }
+function fmtD(d,m,y){ return `${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')}.${y}`; }
+function ymToDate(s){ const{y,m}=pYM(s); return fmtD(monthEnd(y,m),m,y); }
+const MS_SHORT = ['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+const MS_FULL  = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+function ymLabel(s){ const{y,m}=pYM(s); return `${MS_SHORT[m-1]}'${String(y).slice(2)}`; }
+function ymFull(s) { const{y,m}=pYM(s); return `${MS_FULL[m-1]} ${y}`; }
+
+// Parse inception date string "DD.MM.YYYY" → JS Date
+function incDateObj(fundId){ const[d,mo,y]=FUNDS[fundId].incDate.split('.'); return new Date(+y,+mo-1,+d); }
+
+// All interval dates May 2022 → Mar 2026
+const ALL_DATES = (()=>{
+  const out=[]; let y=2022,m=5;
+  for(;;){ out.push({ym:`${y}-${String(m).padStart(2,'0')}`,date:fmtD(monthEnd(y,m),m,y)}); if(y===2026&&m===3)break; m++;if(m>12){m=1;y++;} }
+  return out;
+})();
+
+function fundDateOpts(fundId){
+  const f=FUNDS[fundId];
+  const opts=[{value:'inception',label:`С начала жизни фонда (${f.incDate})`}];
+  for(const d of ALL_DATES) if(ymDiff(f.incYM,d.ym)>=0) opts.push({value:d.ym,label:d.date});
+  return opts;
+}
+function fillSelect(el,opts,sel){ el.innerHTML=''; for(const o of opts){const op=document.createElement('option');op.value=o.value;op.textContent=o.label;if(sel&&op.value===sel)op.selected=true;el.appendChild(op);} }
+
+// ═══════════════════════════════════════════════════════
+//  RETURN CALCULATIONS
+// ═══════════════════════════════════════════════════════
+// FIX #1: exact-day annualization for inception; correct month count (n-1) otherwise
+function annualize(cumRet, entryYM, isInc, fundId, endYM) {
+  if (isInc) {
+    // Exact days from inception date to end of endYM
+    const startDate = incDateObj(fundId);
+    const{y,m}=pYM(endYM);
+    const endDate = new Date(y, m, 0); // last day of month
+    const days = (endDate - startDate) / 86400000;
+    if (days <= 0) return cumRet;
+    return Math.pow(1+cumRet, 365.25/days) - 1;
+  } else {
+    // Months from entryYM+1 to endYM inclusive = ymDiff(entryYM+1, endYM) + 1
+    const nM = ymDiff(ymAdd(entryYM,1), endYM) + 1;
+    if (nM <= 0) return cumRet;
+    return Math.pow(1+cumRet, 12/nM) - 1;
+  }
+}
+
+function growthFactor(fundId, entryYM, isInc, endYM) {
+  const startM = isInc ? entryYM : ymAdd(entryYM,1);
+  let d=ymDiff(startM,endYM); if(d<0) return 1;
+  let f=1, cur=startM;
+  for(let i=0;i<=d;i++){ f*=(1+(FUNDS[fundId].ret[cur]||0)); cur=ymAdd(cur,1); }
+  return f;
+}
+
+// Build value series. Returns {months, vals, allMonths, allVals}
+// allMonths/allVals = full fund from inception (for background chart)
+// months/vals = entry→exit slice (for stats)
+function buildSeries(fundId, entryYM, isInc, endYM, init) {
+  const startM = isInc ? entryYM : ymAdd(entryYM,1);
+  const months=[], vals=[];
+  let cur=startM, val=init;
+  while(ymDiff(cur,endYM)>=0){ val*=(1+(FUNDS[fundId].ret[cur]||0)); months.push(cur); vals.push(val); cur=ymAdd(cur,1); }
+  return { months:[entryYM,...months], vals:[init,...vals] };
+}
+
+// Full fund series from inception (for background chart)
+function buildFullSeries(fundId, endYM) {
+  const f=FUNDS[fundId];
+  const retKeys=Object.keys(f.ret).sort();
+  const startM=retKeys[0]; // inception month (first return)
+  const months=[], vals=[];
+  let cur=startM, val=100.0;
+  months.push(ymAdd(startM,-1)); vals.push(val); // virtual starting point
+  while(ymDiff(cur,endYM)>=0){ val*=(1+(f.ret[cur]||0)); months.push(cur); vals.push(val); cur=ymAdd(cur,1); }
+  return {months, vals};
+}
+
+function maxDD(v){ let pk=v[0],dd=0; for(const x of v){if(x>pk)pk=x;const d=(pk-x)/pk;if(d>dd)dd=d;} return dd; }
+function calcMWR(cfs){
+  // Modified Dietz: MWR = finRes / weightedAvgCapital, then annualized
+  // cfs: [{t: days, a: amount}]  negative=contribution, positive=withdrawal or terminal value
+  // Terminal value = the CF with t = max(t) and a > 0
+  const endT=Math.max(...cfs.map(cf=>cf.t));
+  if(endT<=0) return null;
+
+  // Split cash flows
+  const contributions=cfs.filter(cf=>cf.a<0);                        // money put in (negative)
+  const withdrawals=cfs.filter(cf=>cf.a>0&&cf.t<endT);               // mid-period withdrawals
+  const terminalVal=cfs.filter(cf=>cf.a>0&&cf.t===endT)
+                       .reduce((s,cf)=>s+cf.a,0);                    // portfolio value at end
+
+  const totalInv=contributions.reduce((s,cf)=>s+(-cf.a),0);
+  const totalWdr=withdrawals.reduce((s,cf)=>s+cf.a,0);
+  const finRes=terminalVal+totalWdr-totalInv;                         // financial result
+
+  // Time-weighted average invested capital (Modified Dietz convention):
+  // D_i = days elapsed BEFORE the contribution date (exclusive of contribution day itself)
+  // Initial contribution (t=0): D=0, weight=1
+  // Any subsequent contribution: D = t_i - 1 → weight = (T - (t_i-1)) / T
+  const weightedAvg=contributions.reduce((s,cf)=>{
+    const d=Math.max(0,cf.t-1);
+    const w=(endT-d)/endT;
+    return s+(-cf.a)*w;
+  },0);
+
+  if(weightedAvg<=0) return null;
+
+  const simpleRet=finRes/weightedAvg;
+
+  // Annualize: (1 + r)^(365.25 / T) − 1
+  const mwr=Math.pow(1+simpleRet, 365.25/endT)-1;
+  return {mwr, simple: simpleRet};
+}
+
+// Get the JS Date object for a transaction (exact incDate or month-end)
+function txnDate(txn){
+  if(txn.isInc) return incDateObj(txn.fund);
+  const{y,m}=pYM(txn.ym); return new Date(y,m,0);
+}
+function ymEndDate(ymStr){ const{y,m}=pYM(ymStr); return new Date(y,m,0); }
+function daysBetween(d0,d1){ return (d1-d0)/86400000; }
+
+function fmtP(v,d=1){ if(v===null||isNaN(v))return'—'; return(v>=0?'+':'')+(v*100).toFixed(d)+'%'; }
+function fmtM(v,sym='₽'){ if(v===null||isNaN(v))return'—'; return Math.round(v).toLocaleString('ru-RU')+' '+sym; }
+function cls(v){ return v>=0?'pos':'neg'; }
+
+// ─── Number input formatting ────────────────────────
+function fmtNumInput(el){
+  const raw=el.value.replace(/\D/g,'');
+  const num=parseInt(raw)||0;
+  el.dataset.raw=num;
+  const sel=el.selectionStart;
+  el.value=num===0?'':num.toLocaleString('ru-RU');
+}
+function getNumVal(id){ return parseInt(document.getElementById(id).dataset.raw||'0')||0; }
+
+// ─── Currency helpers (unified for RUB / USD / CNY funds) ───
+// Convert user-entered amount to fund's native currency
+// isInc: use exact inception-date FX rate when true
+function toNativeCur(fund, amount, inputCur, entryYM, isInc){
+  if(isForeignCur(fund) && inputCur==='RUB') return amount/getFXRateForEntry(fund,entryYM,!!isInc);
+  return amount;
+}
+// Value in native currency at endYM
+function trancheNativeVal(tr, endYM){ return tr.origNative*tr.rem*growthFactor(tr.fund,tr.ym,tr.isInc,endYM); }
+// Value in RUB at endYM (portfolio aggregation — uses month-end rate)
+function trancheRubVal(tr, endYM){ const n=trancheNativeVal(tr,endYM); return isForeignCur(tr.fund)?n*getFXRate(tr.fund,endYM):n; }
+// RUB equivalent at entry — uses exact inception rate when applicable
+function trancheEntryRub(tr){ return isForeignCur(tr.fund)?tr.origNative*getFXRateForEntry(tr.fund,tr.ym,tr.isInc):tr.origNative; }
+// Currency symbol for display
+function fundSym(fid){ const c=FUNDS[fid].cur; return c==='CNY'?'¥':c==='USD'?'$':'₽'; }
+// Native currency label for badge
+function fundNativeCur(fid){ return FUNDS[fid].cur; }
+// CSS class for currency badge
+function fundCurClass(fid){ const c=FUNDS[fid].cur; return c==='CNY'?'cur-cny':c==='USD'?'cur-usd':'cur-rub'; }
+
+// ═══════════════════════════════════════════════════════
+//  CANVAS CHART
+// ═══════════════════════════════════════════════════════
+function drawChart(id, datasets, opts={}) {
+  const el=document.getElementById(id); if(!el) return;
+  const dpr=window.devicePixelRatio||1;
+  const W=el.parentElement.clientWidth-32;
+  // Store original height on first call so Retina dpr multiplication doesn't compound
+  if(!el.dataset.h) el.dataset.h = el.getAttribute('height')||'160';
+  const H=+el.dataset.h;
+  el.width=W*dpr; el.height=H*dpr; el.style.width=W+'px'; el.style.height=H+'px';
+  const ctx=el.getContext('2d'); ctx.scale(dpr,dpr);
+  if(!datasets||!datasets.length){ ctx.fillStyle='#9A907F';ctx.font='12px sans-serif';ctx.textAlign='center';ctx.fillText('Нет данных',W/2,H/2);return; }
+  const all=datasets.flatMap(d=>d.data.filter(v=>v!==null&&!isNaN(v)));
+  if(!all.length) return;
+  let mn=Math.min(...all),mx=Math.max(...all);
+  const rng=mx-mn||1; mn-=rng*.03; mx+=rng*.05;
+  const hasMarker = opts.entryIdx!==undefined && opts.entryIdx>=0;
+  const PAD={t: hasMarker ? 26 : 10, r:10, b:26, l:opts.idx?38:56};
+  const pw=W-PAD.l-PAD.r, ph=H-PAD.t-PAD.b;
+  const npts=Math.max(...datasets.map(d=>d.data.length));
+  const labels=datasets[0].labels||[];
+  // Grid
+  ctx.strokeStyle='rgba(229,222,211,.8)'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=PAD.t+ph*(1-i/4);
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+pw,y); ctx.stroke();
+    const v=mn+(mx-mn)*i/4;
+    ctx.fillStyle='#9A907F'; ctx.font='9px sans-serif'; ctx.textAlign='right';
+    ctx.fillText(opts.idx?v.toFixed(0):(Math.round(v/1000)+'к'), PAD.l-3,y+3);
+  }
+  // X labels
+  const step=Math.max(1,Math.floor(npts/7));
+  ctx.fillStyle='#9A907F'; ctx.font='9px sans-serif'; ctx.textAlign='center';
+  for(let i=0;i<npts;i+=step) ctx.fillText(labels[i]||'',PAD.l+pw*i/(npts-1||1),H-4);
+  // Zero line
+  if(mn<0&&mx>0){
+    const yz=PAD.t+ph*(1-(0-mn)/(mx-mn));
+    ctx.strokeStyle='rgba(35,37,43,.2)'; ctx.setLineDash([4,4]);
+    ctx.beginPath(); ctx.moveTo(PAD.l,yz); ctx.lineTo(PAD.l+pw,yz); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // Draw each dataset
+  for(const ds of datasets){
+    const data=ds.data;
+    let started=false, firstI=-1, lastI=-1;
+    ctx.beginPath();
+    for(let i=0;i<data.length;i++){
+      if(data[i]===null||isNaN(data[i])){started=false;continue;}
+      if(firstI<0)firstI=i; lastI=i;
+      const x=PAD.l+pw*i/(npts-1||1), y=PAD.t+ph*(1-(data[i]-mn)/(mx-mn));
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    }
+    if(lastI>=0){ctx.lineTo(PAD.l+pw*lastI/(npts-1||1),PAD.t+ph);ctx.lineTo(PAD.l+pw*firstI/(npts-1||1),PAD.t+ph);ctx.closePath();ctx.fillStyle=ds.color+(ds.dimmed?'10':'16');ctx.fill();}
+    ctx.beginPath(); started=false;
+    for(let i=0;i<data.length;i++){
+      if(data[i]===null||isNaN(data[i])){started=false;continue;}
+      const x=PAD.l+pw*i/(npts-1||1), y=PAD.t+ph*(1-(data[i]-mn)/(mx-mn));
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=ds.color; ctx.lineWidth=ds.dimmed?0.8:(ds.lw||1.8);
+    ctx.globalAlpha=ds.dimmed?0.4:1;
+    ctx.shadowColor=ds.color; ctx.shadowBlur=ds.dimmed?0:4;
+    ctx.stroke(); ctx.shadowBlur=0; ctx.globalAlpha=1;
+  }
+  // Entry marker — label drawn ABOVE the chart grid, dashed line + dot below
+  if(hasMarker && opts.entryIdx<npts){
+    const ei=opts.entryIdx;
+    const ex=PAD.l+pw*ei/(npts-1||1);
+    const ds2=datasets[opts.entryDataset??0].data;
+    // Find first non-null value at or after ei for dot y
+    let dotVal=null;
+    for(let k=ei;k<ds2.length;k++){if(ds2[k]!=null){dotVal=ds2[k];break;}}
+    const ey=dotVal!=null?PAD.t+ph*(1-(dotVal-mn)/(mx-mn)):PAD.t+ph/2;
+    // Label above grid (within top padding, at y=2..24)
+    const lbl=opts.entryLabel||'Вход';
+    ctx.font='700 8.5px sans-serif'; ctx.textAlign='center';
+    const tw=ctx.measureText(lbl).width;
+    const lx=Math.min(Math.max(ex,PAD.l+tw/2+4),W-tw/2-4);
+    ctx.fillStyle='#23252B'; ctx.beginPath();
+    const rx=lx-tw/2-4, ry=1, rw=tw+8, rh=16;
+    ctx.roundRect(rx,ry,rw,rh,4); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.fillText(lbl,lx,12);
+    // Small downward arrow at bottom of pill
+    ctx.fillStyle='#23252B'; ctx.beginPath();
+    ctx.moveTo(ex-4,17); ctx.lineTo(ex+4,17); ctx.lineTo(ex,22); ctx.closePath(); ctx.fill();
+    // Vertical dashed line from grid top to bottom
+    ctx.strokeStyle='rgba(35,37,43,.35)'; ctx.lineWidth=1.2; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(ex,PAD.t); ctx.lineTo(ex,PAD.t+ph); ctx.stroke(); ctx.setLineDash([]);
+    // Dot at value
+    ctx.beginPath(); ctx.arc(ex,ey,4.5,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.strokeStyle='#23252B'; ctx.lineWidth=1.8; ctx.stroke();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+function goMain(id){
+  ['calc','cmp','port'].forEach((s,i)=>{
+    document.getElementById('s-'+s).classList.toggle('active',s===id);
+    document.querySelectorAll('.nav-btn')[i].classList.toggle('active',s===id);
+  });
+  const mainEl=document.querySelector('.main');
+  if(mainEl) mainEl.scrollTo({top:0,behavior:'instant'}); else window.scrollTo(0,0);
+}
+function goInner(id){
+  ['inp','mwr','fnd','tra'].forEach((s,i)=>{
+    document.getElementById('si-'+s).classList.toggle('active',s===id);
+    document.querySelectorAll('.i-btn')[i].classList.toggle('active',s===id);
+  });
+}
+function toggleRates(hdr){ const b=document.getElementById('ratesBody'),a=document.getElementById('ratesArr'); const o=b.classList.toggle('open'); a.textContent=o?'▴':'▾'; }
+function toggleRates2(hdr){ const b=document.getElementById('ratesBody2'),a=document.getElementById('ratesArr2'); const o=b.classList.toggle('open'); a.textContent=o?'▴':'▾'; }
+
+// ═══════════════════════════════════════════════════════
+//  TAB 1: CALCULATOR
+// ═══════════════════════════════════════════════════════
+function c1FundChange(){
+  const fid=document.getElementById('c1Fund').value, f=FUNDS[fid];
+  const retKeys=Object.keys(f.ret).sort();
+  fillSelect(document.getElementById('c1Entry'),fundDateOpts(fid),'inception');
+  fillSelect(document.getElementById('c1Exit'),fundDateOpts(fid),retKeys[retKeys.length-1]);
+  const b=document.getElementById('c1CurBadge');
+  const tog=document.getElementById('c1CurTog');
+  if(isForeignCur(fid)){
+    b.textContent=fundNativeCur(fid); b.className='cur-badge '+fundCurClass(fid); b.dataset.inputcur=fundNativeCur(fid);
+    tog.style.display='inline-flex';
+  } else {
+    b.textContent='RUB'; b.className='cur-badge cur-rub'; b.dataset.inputcur='RUB';
+    tog.style.display='none';
+  }
+}
+function toggleC1Cur(){
+  const fid=document.getElementById('c1Fund').value;
+  const native=fundNativeCur(fid);
+  const b=document.getElementById('c1CurBadge');
+  if((b.dataset.inputcur||native)===native){
+    b.textContent='₽'; b.className='cur-badge cur-rub'; b.dataset.inputcur='RUB';
+  } else {
+    b.textContent=native; b.className='cur-badge '+fundCurClass(fid); b.dataset.inputcur=native;
+  }
+}
+
+function runCalc1(){
+  const fid=document.getElementById('c1Fund').value;
+  const ev=document.getElementById('c1Entry').value;
+  const xv=document.getElementById('c1Exit').value;
+  const rawAmt=getNumVal('c1Amt')||1000000;
+  const isInc=ev==='inception';
+  const entryYM=isInc?FUNDS[fid].incYM:ev;
+  const exitYM=xv==='inception'?FUNDS[fid].incYM:xv;
+  if(ymDiff(entryYM,exitYM)<0){alert('Дата выхода раньше даты входа');return;}
+
+  // Handle foreign currency input: convert RUB→native if needed
+  const inputCur=document.getElementById('c1CurBadge').dataset.inputcur||FUNDS[fid].cur;
+  const sym=fundSym(fid);
+  let amt=rawAmt, inputSymbol=sym;
+  if(isForeignCur(fid) && inputCur==='RUB'){
+    amt=rawAmt/getFXRateForEntry(fid,entryYM,isInc);
+    inputSymbol='₽';
+  }
+
+  const {months,vals}=buildSeries(fid,entryYM,isInc,exitYM,amt);
+  const n=vals.length;
+  const cr=vals[n-1]/amt-1;
+  const ar=annualize(cr,entryYM,isInc,fid,exitYM);
+  const dd=maxDD(vals);
+
+  let bm=-Infinity, wm=Infinity, bmYM='', wmYM='';
+  for(let i=1;i<n;i++){
+    const r=vals[i]/vals[i-1]-1;
+    if(r>bm){bm=r;bmYM=months[i];}
+    if(r<wm){wm=r;wmYM=months[i];}
+  }
+
+  document.getElementById('c1FV').textContent=fmtM(vals[n-1],sym);
+  const entryLbl=isInc?`С нач. жизни (${FUNDS[fid].incDate})`:ymToDate(entryYM);
+  document.getElementById('c1Per').textContent=`${entryLbl} — ${ymToDate(exitYM)}`;
+  const crEl=document.getElementById('c1CR'); crEl.textContent=fmtP(cr); crEl.className='hc-v '+cls(cr);
+  document.getElementById('c1CRa').textContent='кумулятивно';
+  const arEl=document.getElementById('c1AR'); arEl.textContent=fmtP(ar); arEl.className='hc-v '+cls(ar);
+  document.getElementById('c1ARa').textContent='годовых';
+  const pl=document.getElementById('c1PL');
+  pl.textContent=(vals[n-1]-amt>=0?'+':'')+fmtM(vals[n-1]-amt,sym);
+  pl.className='hc-v '+cls(vals[n-1]-amt);
+  const ddEl=document.getElementById('c1DD'); ddEl.textContent=fmtP(-dd); ddEl.className='hc-v neg';
+
+  const investedDisplay = isForeignCur(fid) && inputCur==='RUB'
+    ? `${rawAmt.toLocaleString('ru-RU')} ₽ → ${Math.round(amt).toLocaleString('ru-RU')} ${sym}`
+    : fmtM(rawAmt, inputSymbol);
+
+  document.getElementById('c1Stats').innerHTML=[
+    {lbl:'Лучший мес.',v:fmtP(bm),c:'pos',sub:bmYM?ymFull(bmYM):''},
+    {lbl:'Худший мес.',v:fmtP(wm),c:'neg',sub:wmYM?ymFull(wmYM):''},
+    {lbl:'Вложено',    v:investedDisplay,c:'',sub:''},
+  ].map(s=>`<div class="sc"><div class="sc-lbl">${s.lbl}</div><div class="sc-v ${s.c}">${s.v}</div>${s.sub?`<div class="sc-s">${s.sub}</div>`:''}</div>`).join('');
+
+  document.getElementById('c1Res').style.display='block';
+
+  // Full fund chart + entry marker
+  setTimeout(()=>{
+    const full=buildFullSeries(fid,exitYM);
+    const entryIdx=full.months.findIndex(m=>m===entryYM);
+    const exitIdx=full.months.findIndex(m=>m===exitYM);
+    const scale=entryIdx>=0&&full.vals[entryIdx]>0?amt/full.vals[entryIdx]:1;
+    const beforeData=full.vals.map((v,i)=>i<entryIdx?v*scale:null);
+    const activeData=full.vals.map((v,i)=>i>=entryIdx&&i<=exitIdx?v*scale:null);
+    const afterData=full.vals.map((v,i)=>i>exitIdx?v*scale:null);
+    const labels=full.months.map(ymLabel);
+    const color=FUNDS[fid].color;
+    const entryLabel=isInc?`Вход ${FUNDS[fid].incDate}`:`Вход ${ymToDate(entryYM)}`;
+    drawChart('chart1',[
+      {data:beforeData,labels,color,dimmed:true,lw:1},
+      {data:activeData,labels,color,fill:true,lw:2.2},
+      {data:afterData,labels,color,dimmed:true,lw:1},
+    ],{entryIdx,entryDataset:1,entryLabel});
+  },50);
+}
+
+// ═══════════════════════════════════════════════════════
+//  TAB 2: COMPARISON
+// ═══════════════════════════════════════════════════════
+function initCmp(){
+  const opts=ALL_DATES.map(d=>({value:d.ym,label:d.date}));
+  fillSelect(document.getElementById('cmpS'),opts,'2023-08');
+  fillSelect(document.getElementById('cmpE'),opts,'2026-03');
+  document.getElementById('cmpTogs').innerHTML=Object.entries(FUNDS).map(([id,f])=>`
+    <div class="ftog" id="ft_${id}" onclick="this.classList.toggle('on')">
+      <span class="fdot" style="background:${f.color}"></span>${f.short}
+    </div>`).join('');
+}
+
+function runCmp(){
+  const sYM=document.getElementById('cmpS').value, eYM=document.getElementById('cmpE').value;
+  if(ymDiff(sYM,eYM)<0){alert('Конец раньше начала');return;}
+  const allM=[]; let c=sYM; while(ymDiff(c,eYM)>=0){allM.push(c);c=ymAdd(c,1);}
+  const nM=allM.length, labels=allM.map(ymLabel);
+  const datasets=[],legItems=[],rows=[];
+  for(const[id,f] of Object.entries(FUNDS)){
+    if(!document.getElementById('ft_'+id).classList.contains('on')) continue;
+    const data=[];
+    let val=null, baseSet=false;
+    for(let i=0;i<nM;i++){
+      const m=allM[i];
+      if(!baseSet){
+        if(ymDiff(f.incYM,m)>=0){baseSet=true;val=100;data.push(val);}
+        else data.push(null);
+      } else { val*=(1+(f.ret[m]||0)); data.push(val); }
+    }
+    const nonNull=data.filter(v=>v!==null);
+    if(!nonNull.length) continue;
+    const finalV=nonNull[nonNull.length-1], cr=(finalV-100)/100;
+    const nMon=Math.max(1,nonNull.length-1);
+    const startsLate=ymDiff(sYM,f.incYM)>0;
+    // For annualization: use incDate if startLate, else use sYM as entry
+    let ar;
+    if(startsLate){
+      ar=annualize(cr,f.incYM,true,id,eYM);
+    } else {
+      ar=Math.pow(1+cr,12/nMon)-1;
+    }
+    const dd=maxDD(nonNull);
+    let bm=-Infinity,wm=Infinity;
+    for(let i=1;i<nonNull.length;i++){const r=nonNull[i]/nonNull[i-1]-1;if(r>bm)bm=r;if(r<wm)wm=r;}
+    datasets.push({data,labels,color:f.color});
+    legItems.push({name:f.short,color:f.color});
+    rows.push({id,f,cr,ar,dd,bm,wm,nMon,startsLate,startDate:startsLate?f.incDate:ymToDate(sYM)});
+  }
+  if(!rows.length){alert('Нет данных');return;}
+  rows.sort((a,b)=>b.cr-a.cr);
+  setTimeout(()=>drawChart('chart2',datasets,{idx:true}),50);
+  document.getElementById('cmpLeg').innerHTML=legItems.map(l=>`<div class="cleg-i"><div class="cleg-l" style="background:${l.color}"></div>${l.name}</div>`).join('');
+  document.getElementById('cmpTH').innerHTML=`<tr><th>Фонд</th><th>База с</th><th>Мес.</th><th>Кум. %</th><th>% год.</th><th>Макс. пр.</th><th>Лучш.</th><th>Худш.</th></tr>`;
+  document.getElementById('cmpTB').innerHTML=rows.map(r=>`<tr>
+    <td><span style="color:${r.f.color};margin-right:4px">●</span>${r.f.short}${r.startsLate?'<sup style="color:#8C6B00"> ✦</sup>':''}</td>
+    <td style="color:${r.startsLate?'#8C6B00':''};font-size:10px">${r.startDate}</td>
+    <td>${r.nMon}</td>
+    <td style="color:${r.cr>=0?'var(--pos)':'var(--neg)'}">${fmtP(r.cr)}</td>
+    <td style="color:${r.ar>=0?'var(--pos)':'var(--neg)'}">${fmtP(r.ar)}</td>
+    <td style="color:var(--neg)">${fmtP(-r.dd)}</td>
+    <td style="color:var(--pos)">${fmtP(r.bm)}</td>
+    <td style="color:var(--neg)">${fmtP(r.wm)}</td>
+  </tr>`).join('');
+  document.getElementById('cmpNote').style.display=rows.some(r=>r.startsLate)?'block':'none';
+}
+
+// ═══════════════════════════════════════════════════════
+//  TAB 3: MWR PORTFOLIO
+// ═══════════════════════════════════════════════════════
+let txCtr=0;
+const FUND_OPTS=Object.entries(FUNDS).map(([id,f])=>`<option value="${id}">${f.name}</option>`).join('');
+
+function addTxn(type){
+  const id=++txCtr, isIn=type==='in';
+  const div=document.createElement('div');
+  div.className='txr'+(isIn?'':' is-out'); div.id='txr_'+id;
+  div.innerHTML=`
+    <div class="txr-ico ${type}">${isIn?'📈':'📤'}</div>
+    <div class="txr-body">
+      <div class="txr-row1">
+        <span class="txr-badge ${type}">${isIn?'Ввод':'Вывод'}</span>
+        <div class="sw" style="flex:1;min-width:130px"><select id="txf_${id}" onchange="txFundChange(${id})">${FUND_OPTS}</select></div>
+      </div>
+      <div class="txr-row2">
+        <div class="sw" style="flex:1;min-width:130px"><select id="txd_${id}"></select></div>
+        <input type="text" id="txa_${id}" class="num-inp" value="${isIn?'1 000 000':'500 000'}" data-raw="${isIn?1000000:500000}"
+               style="min-width:80px;flex:1;text-align:right" oninput="fmtNumInput(this)">
+        <span id="txcur_${id}" class="cur-badge cur-rub">RUB</span>
+        <button id="txtogl_${id}" class="btn-cur-tog" onclick="toggleFxCur(${id})">⇄</button>
+      </div>
+    </div>
+    <button class="btn-del" onclick="document.getElementById('txr_${id}').remove()">✕</button>`;
+  document.getElementById('txnList').appendChild(div);
+  txFundChange(id);
+}
+
+function txFundChange(id){
+  const fid=document.getElementById('txf_'+id).value;
+  fillSelect(document.getElementById('txd_'+id),fundDateOpts(fid),'inception');
+  const b=document.getElementById('txcur_'+id), tog=document.getElementById('txtogl_'+id);
+  if(isForeignCur(fid)){
+    b.textContent=fundNativeCur(fid); b.className='cur-badge '+fundCurClass(fid); b.dataset.inputCur=fundNativeCur(fid);
+    tog.style.display='inline-flex';
+  } else {
+    b.textContent='RUB'; b.className='cur-badge cur-rub'; b.dataset.inputCur='RUB';
+    tog.style.display='none';
+  }
+}
+function toggleFxCur(id){
+  const fid=document.getElementById('txf_'+id).value;
+  const native=fundNativeCur(fid);
+  const b=document.getElementById('txcur_'+id);
+  if((b.dataset.inputCur||native)===native){
+    b.textContent='₽'; b.className='cur-badge cur-rub'; b.dataset.inputCur='RUB';
+  } else {
+    b.textContent=native; b.className='cur-badge '+fundCurClass(fid); b.dataset.inputCur=native;
+  }
+}
+
+function getTxns(){
+  return[...document.querySelectorAll('#txnList .txr')].map(row=>{
+    const id=row.id.replace('txr_','');
+    const isIn=row.querySelector('.txr-badge').classList.contains('in');
+    const fid=document.getElementById('txf_'+id).value;
+    const dv=document.getElementById('txd_'+id).value;
+    const isInc=dv==='inception', txYM=isInc?FUNDS[fid].incYM:dv;
+    const b=document.getElementById('txcur_'+id);
+    const inputCur=(b&&b.dataset.inputCur)||FUNDS[fid].cur;
+    const amount=parseInt(document.getElementById('txa_'+id).dataset.raw||'0')||0;
+    return{type:isIn?'in':'out',fund:fid,ym:txYM,isInc,amount,inputCur};
+  }).filter(t=>t.amount>0);
+}
+
+function processPortfolio(txns, endYM){
+  if(!txns.length) return null;
+  const sorted=[...txns].sort((a,b)=>-ymDiff(a.ym,b.ym));
+  const firstDate=txnDate(sorted[0]);  // exact JS Date of first transaction
+  const endDate=ymEndDate(endYM);
+  const tranches=[], irrCFs=[]; let tid=0;
+
+  for(const txn of sorted){
+    // Use DAYS from first transaction (exact for inception, month-end for others)
+    const t=daysBetween(firstDate, txnDate(txn));
+    const origNative=toNativeCur(txn.fund,txn.amount,txn.inputCur,txn.ym,txn.isInc);
+    if(txn.type==='in'){
+      tranches.push({id:tid++,fund:txn.fund,ym:txn.ym,isInc:txn.isInc,orig:txn.amount,origNative,rem:1.0,inputCur:txn.inputCur});
+      irrCFs.push({t, a:-trancheEntryRub({fund:txn.fund,ym:txn.ym,origNative,inputCur:txn.inputCur})});
+    } else {
+      const ft=tranches.filter(tr=>tr.fund===txn.fund&&tr.rem>0.001);
+      const fv=ft.reduce((s,tr)=>s+trancheRubVal(tr,txn.ym),0);
+      if(fv>0){const frac=Math.min(1,txn.amount/fv);for(const tr of ft){tr.rem*=(1-frac);if(tr.rem<0.001)tr.rem=0;}}
+      irrCFs.push({t, a:txn.amount});
+    }
+  }
+
+  const endT=daysBetween(firstDate, endDate);  // days to end
+  let portVal=0;
+  const fundMap={};
+  for(const tr of tranches){
+    if(tr.rem<0.001) continue;
+    const n=trancheNativeVal(tr,endYM), r=trancheRubVal(tr,endYM);
+    portVal+=r;
+    if(!fundMap[tr.fund]) fundMap[tr.fund]={val_n:0,totalIn_n:0,totalOut_n:0,val_rub:0};
+    fundMap[tr.fund].val_n+=n; fundMap[tr.fund].val_rub+=r;
+  }
+  // Track total in/out natively per fund
+  for(const txn of sorted){
+    const fid=txn.fund;
+    if(!fundMap[fid]) continue;
+    const native=toNativeCur(fid,txn.amount,txn.inputCur,txn.ym,txn.isInc);
+    if(txn.type==='in') fundMap[fid].totalIn_n+=native;
+    else{ const out_n=isForeignCur(fid)?txn.amount/getFXRate(fid,txn.ym):txn.amount; fundMap[fid].totalOut_n+=out_n; }
+  }
+
+  irrCFs.push({t:endT, a:portVal});
+  const _pm=calcMWR(irrCFs);
+  const mwr=_pm?_pm.mwr:null;
+  const mwrSimple=_pm?_pm.simple:null;
+
+  // Per-fund MWR in native currency — also days-based
+  for(const[fid,fr] of Object.entries(fundMap)){
+    const ftxns=sorted.filter(t=>t.fund===fid); if(!ftxns.length) continue;
+    const ffDate=txnDate(ftxns[0]);  // exact date of first fund transaction
+    const fcfs=ftxns.map(txn=>{
+      const native=toNativeCur(fid,txn.amount,txn.inputCur,txn.ym,txn.isInc);
+      const t=daysBetween(ffDate, txnDate(txn));
+      if(txn.type==='in') return{t, a:-native};
+      // Withdrawal is in RUB; convert to native for per-fund MWR
+      const a=isForeignCur(fid)?txn.amount/getFXRate(fid,txn.ym):txn.amount;
+      return{t, a};
+    });
+    fcfs.push({t: daysBetween(ffDate, endDate), a: fr.val_n});
+    const _fm=calcMWR(fcfs);
+    fr.mwr=_fm?_fm.mwr:null;
+    fr.mwrSimple=_fm?_fm.simple:null;
+    fr.nM=ymDiff(ftxns[0].ym, endYM);   // months, for display only
+    fr.name=FUNDS[fid].name; fr.color=FUNDS[fid].color; fr.short=FUNDS[fid].short;
+    fr.sym=fundSym(fid); fr.curLabel=fid==='YU5'?'CNY':FUNDS[fid].cur;
+  }
+  const trancheRes=tranches.map(tr=>{
+    const native=trancheNativeVal(tr,endYM);
+    const invNative=tr.origNative*tr.rem;
+    const nM=ymDiff(tr.ym,endYM);
+    const retPct=invNative>0?native/invNative-1:0;
+    const sym=fundSym(tr.fund);
+    const dateStr=tr.isInc?FUNDS[tr.fund].incDate:ymToDate(tr.ym);
+    const isRubIn=(isForeignCur(tr.fund)&&tr.inputCur==='RUB');
+    const amtLabel=isRubIn
+      ?`${tr.orig.toLocaleString('ru-RU')} ₽ → ${Math.round(tr.origNative).toLocaleString('ru-RU')} ${sym}`
+      :`${Math.round(tr.origNative).toLocaleString('ru-RU')} ${sym}`;
+    return{...tr,native,invNative,retPct,nM,ar:annualize(retPct,tr.ym,tr.isInc,tr.fund,endYM),dateStr,amtLabel,sym};
+  });
+  const portSeries=buildPortSeries(sorted,endYM);
+  // totalInv in RUB: convert all foreign-currency deposits
+  const totalInv=sorted.filter(t=>t.type==='in').reduce((s,t)=>{
+    const n=toNativeCur(t.fund,t.amount,t.inputCur,t.ym,t.isInc);
+    return s+(isForeignCur(t.fund)?n*getFXRateForEntry(t.fund,t.ym,t.isInc):n);
+  },0);
+  const totalWdr=sorted.filter(t=>t.type==='out').reduce((s,t)=>s+t.amount,0);
+  const finRes=portVal+totalWdr-totalInv;
+  return{portVal,endYM,firstYM:sorted[0].ym,totalInv,totalWdr,finRes,mwr,mwrSimple,
+         nM:ymDiff(sorted[0].ym,endYM),  // months for display
+         fundMap,trancheRes,portSeries};
+}
+
+function buildPortSeries(txns, endYM){
+  if(!txns.length) return{months:[],vals:[]};
+  const sorted=[...txns].sort((a,b)=>-ymDiff(a.ym,b.ym));
+  const s0=sorted[0].ym; const allM=[]; let c=s0;
+  while(ymDiff(c,endYM)>=0){allM.push(c);c=ymAdd(c,1);}
+  const live=[]; let tid2=0;
+  const byM={};
+  for(const t of sorted)(byM[t.ym]||(byM[t.ym]=[])).push(t);
+  const vals=[];
+  for(const m of allM){
+    for(const p of live){
+      if(p.rem<=0) continue;
+      const r=FUNDS[p.fund].ret[m]||0;
+      if(isForeignCur(p.fund)){
+        // Track native seed, convert to RUB via current FX rate
+        p.seed*=(1+r);
+        p.rubVal=p.seed*getFXRate(p.fund,m);
+      } else {
+        p.rubVal*=(1+r);
+      }
+    }
+    for(const txn of(byM[m]||[])){
+      const origN=toNativeCur(txn.fund,txn.amount,txn.inputCur,txn.ym,txn.isInc);
+      if(txn.type==='in'){
+        if(isForeignCur(txn.fund)){
+          let seed=origN; const rate0=getFXRateForEntry(txn.fund,m,txn.isInc);
+          if(txn.isInc) seed*=(1+(FUNDS[txn.fund].ret[m]||0));
+          live.push({id:tid2++,fund:txn.fund,rem:1.0,seed,rubVal:seed*rate0});
+        } else {
+          let rubVal=origN; if(txn.isInc) rubVal*=(1+(FUNDS[txn.fund].ret[m]||0));
+          live.push({id:tid2++,fund:txn.fund,rem:1.0,rubVal});
+        }
+      } else {
+        const ft=live.filter(p=>p.fund===txn.fund&&p.rem>0.001);
+        const fv=ft.reduce((s,p)=>s+p.rubVal*p.rem,0);
+        if(fv>0){const frac=Math.min(1,txn.amount/fv);for(const p of ft){p.rem*=(1-frac);if(p.rem<0.001)p.rem=0;}}
+      }
+    }
+    vals.push(live.reduce((s,p)=>s+p.rubVal*p.rem,0));
+  }
+  return{months:allM,vals};
+}
+
+let mwrRes=null;
+function runMWR(){
+  const txns=getTxns(); if(!txns.length){alert('Добавьте хотя бы один ввод');return;}
+  const endYM=document.getElementById('mwrEnd').value;
+  mwrRes=processPortfolio(txns,endYM);
+  if(!mwrRes){alert('Ошибка расчёта');return;}
+  showMWR(mwrRes); goInner('mwr');
+}
+
+function showMWR(r){
+  document.getElementById('mwrEmp').style.display='none';
+  document.getElementById('mwrHero').style.display='block';
+  document.getElementById('mwrPV').textContent=fmtM(r.portVal,'₽');
+  document.getElementById('mwrSub').textContent=`Расчёт на ${ymToDate(r.endYM)} · ${r.nM} мес.`;
+  const iEl=document.getElementById('mwrIRR'); iEl.textContent=r.mwr!==null?fmtP(r.mwr):'—'; iEl.className='hc-v '+(r.mwr&&r.mwr>=0?'pos':'neg');
+  const frEl=document.getElementById('mwrFR'); frEl.textContent=(r.finRes>=0?'+':'')+fmtM(r.finRes,'₽'); frEl.className='hc-v '+cls(r.finRes);
+  document.getElementById('mwrFRa').textContent='портф.+выводы−вводы';
+  document.getElementById('mwrInv').textContent=fmtM(r.totalInv,'₽');
+  document.getElementById('mwrWdr').textContent=fmtM(r.totalWdr,'₽');
+  document.getElementById('mwrStats').innerHTML=[
+    {lbl:'Прибыль',v:(r.finRes>=0?'+':'')+fmtM(r.finRes,'₽'),c:cls(r.finRes)},
+    {lbl:'MWR абс.',v:r.mwrSimple!==null?fmtP(r.mwrSimple):'—',c:r.mwrSimple!==null?cls(r.mwrSimple):''},
+    {lbl:'Фондов',v:Object.keys(r.fundMap).length,c:''},
+    {lbl:'Траншей',v:r.trancheRes.length,c:''}
+  ].map(s=>`<div class="sc"><div class="sc-lbl">${s.lbl}</div><div class="sc-v ${s.c}">${s.v}</div></div>`).join('');
+  setTimeout(()=>{if(r.portSeries.vals.length>1)drawChart('chart3',[{data:r.portSeries.vals,labels:r.portSeries.months.map(ymLabel),color:'#23252B',fill:true}]);},50);
+  // BY FUND
+  document.getElementById('fndEmp').style.display='none';
+  const fcl=document.getElementById('fcList'); fcl.style.display='flex';
+  fcl.innerHTML=Object.entries(r.fundMap).map(([fid,fr])=>{
+    const bw=Math.min(100,Math.abs(fr.mwr||0)*200).toFixed(0);
+    const bc=(fr.mwr||0)>=0?`linear-gradient(90deg,${fr.color}88,${fr.color})`:`linear-gradient(90deg,var(--neg),#E07070)`;
+    const pl=fr.val_n-fr.totalIn_n+fr.totalOut_n;
+    return`<div class="fcard" id="fc_${fid}" onclick="tFC('${fid}')">
+      <div class="fc-chev"><svg width="11" height="7" viewBox="0 0 11 7" fill="none"><path d="M1 1L5.5 6L10 1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+      <div class="fc-top">
+        <div><div class="fc-name">${fr.name}</div><div class="fc-tag">${fr.curLabel} · ${Math.round(fr.val_n).toLocaleString('ru-RU')} ${fr.sym}</div></div>
+        <div><div class="fc-ret ${fr.mwr!=null?cls(fr.mwr):''}">${fr.mwr!==null?fmtP(fr.mwr):'—'}</div><div class="fc-ann"style="color:var(--t3)">/ год</div></div>
+      </div>
+      <div class="fc-bar-bg"><div class="fc-bar" style="width:${bw}%;background:${bc}"></div></div>
+      <div class="fc-kv">
+        <span class="fkv">Вложено: <span class="fkv-v">${Math.round(fr.totalIn_n).toLocaleString('ru-RU')} ${fr.sym}</span></span>
+        <span class="fkv">П/У: <span class="fkv-v" style="color:${pl>=0?'var(--pos)':'var(--neg)'}">${(pl>=0?'+':'')+Math.round(pl).toLocaleString('ru-RU')} ${fr.sym}</span></span>
+      </div>
+      <div class="fc-det" id="fcd_${fid}">
+        <div class="mwr-tag ${fr.mwr&&fr.mwr>=0?'pos':'neg'}">MWR: ${fr.mwr!==null?fmtP(fr.mwr):'—'} / год · ${fr.mwrSimple!==null?fmtP(fr.mwrSimple):'—'} абс.</div>
+        <div class="fc-dg">
+          <div><div class="fd-l">Период</div><div class="fd-v">${fr.nM} мес.</div></div>
+          <div><div class="fd-l">MWR абс.</div><div class="fd-v" style="color:${fr.mwrSimple!=null&&fr.mwrSimple>=0?'var(--pos)':'var(--neg)'}">${fmtP(fr.mwrSimple)}</div></div>
+          <div><div class="fd-l">Валюта</div><div class="fd-v">${fr.curLabel}</div></div>
+          <div><div class="fd-l">MWR / год</div><div class="fd-v" style="color:${fr.mwr&&fr.mwr>=0?'var(--pos)':'var(--neg)'}">${fr.mwr!==null?fmtP(fr.mwr):'—'}</div></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // TRANCHES
+  document.getElementById('traEmp').style.display='none';
+  document.getElementById('trWrap').style.display='block';
+  document.getElementById('trBd').innerHTML=r.trancheRes.map(t=>{
+    const act=t.rem>0.001, f=FUNDS[t.fund];
+    return`<tr>
+      <td><span style="color:${f.color};margin-right:4px">●</span>${f.short}</td>
+      <td style="font-size:10px">${t.dateStr}</td>
+      <td style="font-size:10px">${t.amtLabel}</td>
+      <td>${act?Math.round(t.native).toLocaleString('ru-RU')+' '+t.sym:'—'}</td>
+      <td style="color:${t.retPct>=0?'var(--pos)':'var(--neg)'}">${fmtP(t.retPct)}</td>
+      <td style="color:${t.ar>=0?'var(--pos)':'var(--neg)'}">${fmtP(t.ar)}</td>
+      <td><span class="tr-st ${act?'act':'red'}">${act?'Активен':'Погашен'}</span></td>
+    </tr>`;
+  }).join('');
+}
+function tFC(id){
+  const c=document.getElementById('fc_'+id),d=document.getElementById('fcd_'+id),o=c.classList.contains('open');
+  document.querySelectorAll('.fcard').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.fc-det').forEach(x=>x.classList.remove('open'));
+  if(!o){c.classList.add('open');d.classList.add('open');}
+}
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('c1Fund').innerHTML=Object.entries(FUNDS).map(([id,f])=>`<option value="${id}">${f.name}</option>`).join('');
+  c1FundChange();
+  initCmp();
+  fillSelect(document.getElementById('mwrEnd'),ALL_DATES.map(d=>({value:d.ym,label:d.date})),'2026-03');
+  // Rates grid
+  const rg=document.getElementById('ratesGrid');
+  rg.innerHTML=Object.entries(CNY_RUB).map(([k,v])=>{const{y,m}=pYM(k);return`<div class="rc"><div class="rc-d">${MS_SHORT[m-1]} ${String(y).slice(2)}</div><div class="rc-v">${v.toFixed(2)}</div></div>`;}).join('');
+  const rg2=document.getElementById('ratesGrid2');
+  rg2.innerHTML=Object.entries(USD_RUB).map(([k,v])=>{const{y,m}=pYM(k);return`<div class="rc"><div class="rc-d">${MS_SHORT[m-1]} ${String(y).slice(2)}</div><div class="rc-v">${v.toFixed(2)}</div></div>`;}).join('');
+  // Default txns
+  addTxn('in'); addTxn('in');
+  setTimeout(()=>{
+    document.getElementById('txf_1').value='R5'; txFundChange(1);
+    document.getElementById('txf_2').value='APLUS'; txFundChange(2);
+    setTimeout(()=>{
+      document.getElementById('txd_1').value='2023-07';
+      document.getElementById('txd_2').value='2024-11';
+    },20);
+  },0);
+  setTimeout(()=>{drawChart('chart1',[]);drawChart('chart2',[]);drawChart('chart3',[]);},120);
+});
+
+// ─── Canvas roundRect polyfill (iOS < 16) ─────────────────
+if(typeof CanvasRenderingContext2D!=='undefined'&&!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
+    const rr=Math.min(r,Math.min(w,h)/2);
+    this.beginPath();this.moveTo(x+rr,y);this.lineTo(x+w-rr,y);this.arcTo(x+w,y,x+w,y+rr,rr);
+    this.lineTo(x+w,y+h-rr);this.arcTo(x+w,y+h,x+w-rr,y+h,rr);this.lineTo(x+rr,y+h);
+    this.arcTo(x,y+h,x,y+h-rr,rr);this.lineTo(x,y+rr);this.arcTo(x,y,x+rr,y,rr);
+    this.closePath();return this;
+  };
+}
+
+// ─── iOS: prevent body bounce scroll ─────────────────────
+document.addEventListener('touchmove',function(e){
+  if(e.target===document.body)e.preventDefault();
+},{passive:false});
+
+// ─── iOS: allow scroll inside .main ──────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  const mainEl=document.querySelector('.main');
+  if(mainEl) mainEl.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true});
+});
+
+// ─── Resize: only react to WIDTH changes (not iOS address bar height changes) ─
+let _lastW=window.innerWidth;
+window.addEventListener('resize',()=>{
+  const w=window.innerWidth;
+  if(w===_lastW) return;
+  _lastW=w;
+  ['chart1','chart2','chart3'].forEach(id=>{const c=document.getElementById(id);if(c){c.width=0;c.style.width='';}});
+});
+
+</script>
+</body>
+</html>
